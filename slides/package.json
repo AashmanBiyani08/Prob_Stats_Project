@@ -1,0 +1,7 @@
+{
+  "name": "pns-review1-deck",
+  "private": true,
+  "description": "Builds the Review-1 PowerPoint from slides/deck_data.json",
+  "scripts": { "build": "node build_deck.js" },
+  "dependencies": { "pptxgenjs": "3.12.0" }
+}

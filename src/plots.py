@@ -27,7 +27,7 @@ def timeline(counts, labels, path, seconds=300):
         ax.set_ylabel("losses / s")
         ax.set_title(labels[k], loc="left", fontsize=10)
     axes[-1].set_xlabel("time (s)")
-    fig.suptitle("Packet losses per second (first 5 minutes)", fontsize=12)
+    fig.suptitle(f"Packet losses per second (first {seconds} s)", fontsize=12)
     _save(fig, path)
 
 
@@ -67,7 +67,7 @@ def gap_survival(gaps, gap_fits, labels, path):
     _save(fig, path)
 
 
-def posteriors(posts, seq, labels, path):
+def posteriors(posts, seq, labels, path, seq_label=""):
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     ax = axes[0]
     for k, p in posts.items():
@@ -78,10 +78,11 @@ def posteriors(posts, seq, labels, path):
     ax.set_xlabel("packet loss probability (%)"); ax.set_ylabel("posterior density")
     ax.set_title("Posterior of loss rate, Beta(1,1) prior"); ax.legend(fontsize=8)
     ax = axes[1]
+    xmax = max(s["ci_high"] for s in seq) * 1.07   # a little past the widest credible interval
     for s in seq:
-        x = np.linspace(0, 0.06, 600)
+        x = np.linspace(0, xmax, 600)
         ax.plot(x * 100, stats.beta.pdf(x, s["alpha"], s["beta"]) / 100, label=f"after {s['t']} s")
-    ax.set_xlabel("packet loss probability (%)"); ax.set_title("Sequential updating — Campus Wi-Fi")
+    ax.set_xlabel("packet loss probability (%)"); ax.set_title(f"Sequential updating — {seq_label}")
     ax.legend(fontsize=8)
     _save(fig, path)
 

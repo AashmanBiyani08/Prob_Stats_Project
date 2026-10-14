@@ -1,6 +1,6 @@
 # Results summary — packet-loss case study
 
-## 1. Descriptive statistics (1 hour, 50 packets/s, 180,000 packets per network)
+## 1. Descriptive statistics (3600 s, 50 packets/s, 180,000 packets per network)
 
 | Network | Loss rate | Mean losses/s | Variance | Var/Mean | Mean burst | Max burst | % losses in bursts |
 |---|---|---|---|---|---|---|---|
@@ -70,7 +70,7 @@ Power to reject independence (α = 0.05):
 | Mobile hotspot | runs | 0.91 | 0.99 | 1.00 | 1.00 | 1.00 | 1.00 |
 | Mobile hotspot | markov_lrt | 0.89 | 0.99 | 1.00 | 1.00 | 1.00 | 1.00 |
 
-Coverage of nominal 95% intervals for the true loss rate (10-minute captures):
+Coverage of nominal 95% intervals for the true loss rate (600 s captures):
 
 | Network | Naive coverage | Adjusted coverage | Naive width | Adjusted width |
 |---|---|---|---|---|

@@ -26,4 +26,12 @@ COVERAGE_REPS = 2000        # replicates in the interval-coverage study
 COVERAGE_DURATION_S = 600   # length of each simulated capture in the coverage study
 BLOCK_S = 10                # block length (s) used for the design-effect correction
 
+# Bayesian analysis settings
+MARKOV_DRAWS = 100_000      # posterior draws for the Markov transition probabilities
+ORDERING_DRAWS = 200_000    # posterior draws for P(p_1 < p_2 < p_3)
+HEAVY_LOSS_K = 5            # "heavy" window = at least this many losses (posterior predictive check)
+SEQ_SCENARIO = "S2_WiFi"    # scenario used to show sequential updating
+SEQ_CHECKPOINTS_S = [10, 60, 600, 3600]
+TIMELINE_S = 300            # seconds of traffic shown in the timeline figure
+
 RESULTS_DIR = "results"

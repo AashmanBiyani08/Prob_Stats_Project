@@ -31,7 +31,7 @@ def main():
     params = {k: {kk: vv for kk, vv in v.items() if kk != "label"} for k, v in C.SCENARIOS.items()}
 
     # ---------------- 1. traffic traces ----------------
-    log("Generating 1-hour packet traces for 3 network scenarios", t0)
+    log(f"Generating {C.DURATION_S} s packet traces for {len(params)} network scenarios", t0)
     losses, counts, gaps = {}, {}, {}
     for k, prm in params.items():
         losses[k] = LM.simulate_losses(n_packets, rng=rng, **prm)
@@ -99,19 +99,20 @@ def main():
     for k in params:
         l = losses[k]
         posts[k] = BY.beta_posterior(int(l.sum()), len(l))
-        mposts[k] = BY.markov_posterior(l, 100_000, rng)
+        mposts[k] = BY.markov_posterior(l, C.MARKOV_DRAWS, rng)
         R["scenarios"][k]["bayes"] = {
             "posterior": posts[k],
             "adjusted_posterior": BY.adjusted_posterior(l, C.BLOCK_S * C.PACKET_RATE),
             "markov": {kk: vv for kk, vv in mposts[k].items() if not kk.startswith("samples")},
-            "predictive_tail": BY.posterior_predictive_tail(posts[k], ppw, 5, counts[k]),
+            "predictive_tail": BY.posterior_predictive_tail(posts[k], ppw, C.HEAVY_LOSS_K, counts[k]),
         }
-    seq = BY.sequential_posteriors(losses["S2_WiFi"], C.PACKET_RATE, [10, 60, 600, 3600])
-    R["sequential_S2"] = seq
-    R["ordering"] = BY.prob_ordering(posts, list(params), 200_000, rng)
+    seq = BY.sequential_posteriors(losses[C.SEQ_SCENARIO], C.PACKET_RATE, C.SEQ_CHECKPOINTS_S)
+    R["sequential"] = {"scenario": C.SEQ_SCENARIO, "steps": seq}
+    R["ordering"] = BY.prob_ordering(posts, list(params), C.ORDERING_DRAWS, rng)
 
     # ---------------- 5. Monte Carlo studies ----------------
-    log(f"Monte Carlo power study ({C.POWER_REPS} reps x {len(C.POWER_DURATIONS_S)} lengths x 3 networks)", t0)
+    n_net = len(params)
+    log(f"Monte Carlo power study ({C.POWER_REPS} reps x {len(C.POWER_DURATIONS_S)} lengths x {n_net} networks)", t0)
     power = {}
     for k, prm in params.items():
         power[k] = HT.power_study(prm, C.POWER_DURATIONS_S, C.POWER_REPS, C.PACKET_RATE, C.ALPHA, rng,
@@ -119,7 +120,7 @@ def main():
         log(f"   power done for {labels[k]}", t0)
     R["power"] = {"durations_s": C.POWER_DURATIONS_S, **power}
 
-    log(f"Monte Carlo coverage study ({C.COVERAGE_REPS} reps x 3 networks)", t0)
+    log(f"Monte Carlo coverage study ({C.COVERAGE_REPS} reps x {n_net} networks)", t0)
     cov = {}
     for k, prm in params.items():
         cov[k] = BY.coverage_study(prm, LM.theoretical_loss_rate(**prm), C.COVERAGE_DURATION_S,
@@ -129,10 +130,10 @@ def main():
     # ---------------- 6. figures ----------------
     log("Drawing figures", t0)
     d = C.RESULTS_DIR
-    P.timeline(counts, labels, f"{d}/fig1_loss_timeline.png")
+    P.timeline(counts, labels, f"{d}/fig1_loss_timeline.png", seconds=C.TIMELINE_S)
     P.count_fits(counts, fits, labels, f"{d}/fig2_count_distribution_fits.png")
     P.gap_survival(gaps, gap_fits, labels, f"{d}/fig3_gap_survival.png")
-    P.posteriors(posts, seq, labels, f"{d}/fig4_bayesian_posteriors.png")
+    P.posteriors(posts, seq, labels, f"{d}/fig4_bayesian_posteriors.png", seq_label=labels[C.SEQ_SCENARIO])
     P.markov_posteriors(mposts, labels, f"{d}/fig5_markov_posteriors.png")
     P.power_curves(power, C.POWER_DURATIONS_S, labels, f"{d}/fig6_power_curves.png")
     P.coverage_bar(cov, labels, f"{d}/fig7_interval_coverage.png")
@@ -151,7 +152,7 @@ def main():
     R = clean(R)
     with open(f"{d}/results.json", "w") as f:
         json.dump(R, f, indent=2)
-    write_summary(R, labels, f"{d}/summary.md")
+    write_summary(R, labels, f"{d}/summary.md", C)
     log(f"DONE. Results in ./{d}/", t0)
 
 
@@ -161,10 +162,11 @@ def fmt_p(p, B=None):
     return "< 1e-10" if p < 1e-10 else f"{p:.3g}"
 
 
-def write_summary(R, labels, path):
+def write_summary(R, labels, path, C):
     L = ["# Results summary — packet-loss case study", ""]
     S = R["scenarios"]
-    L += ["## 1. Descriptive statistics (1 hour, 50 packets/s, 180,000 packets per network)", "",
+    L += [f"## 1. Descriptive statistics ({C.DURATION_S} s, {C.PACKET_RATE} packets/s, "
+          f"{C.DURATION_S * C.PACKET_RATE:,} packets per network)", "",
           "| Network | Loss rate | Mean losses/s | Variance | Var/Mean | Mean burst | Max burst | % losses in bursts |",
           "|---|---|---|---|---|---|---|---|"]
     for k, s in S.items():
@@ -208,22 +210,22 @@ def write_summary(R, labels, path):
                  f"[{a['ci_low']*100:.3f}%, {a['ci_high']*100:.3f}%] | {m['P_b_gt_a']:.4f} | "
                  f"{m['amp_q'][1]:.0f} [{m['amp_q'][0]:.0f}, {m['amp_q'][2]:.0f}] | "
                  f"{m['burst_len_q'][1]:.2f} [{m['burst_len_q'][0]:.2f}, {m['burst_len_q'][2]:.2f}] |")
-    L += ["", "Posterior predictive check — P(≥5 losses in a 1-s window):", ""]
+    L += ["", f"Posterior predictive check — P(≥{C.HEAVY_LOSS_K} losses in a {C.WINDOW_S}-s window):", ""]
     for k, s in S.items():
         t = s["bayes"]["predictive_tail"]
         L.append(f"- {labels[k]}: i.i.d. model predicts {t['predicted']:.2e}, observed share {t['observed']:.2e}")
     L += ["", "Probability ordering of loss rates: " +
           ", ".join(f"{k} = {v:.4f}" for k, v in R["ordering"].items()), "",
-          "Sequential updating (Campus Wi-Fi): " +
+          f"Sequential updating ({labels[R['sequential']['scenario']]}): " +
           "; ".join(f"after {s['t']} s: mean {s['mean']*100:.2f}%, 95% CI [{s['ci_low']*100:.2f}%, {s['ci_high']*100:.2f}%]"
-                    for s in R["sequential_S2"]), ""]
-    L += ["## 5. Monte Carlo studies", "", "Power to reject independence (α = 0.05):", "",
+                    for s in R["sequential"]["steps"]), ""]
+    L += ["## 5. Monte Carlo studies", "", f"Power to reject independence (α = {C.ALPHA}):", "",
           "| Network | Test | " + " | ".join(f"{t}s" for t in R["power"]["durations_s"]) + " |",
           "|---|---|" + "---|" * len(R["power"]["durations_s"])]
     for k in S:
         for test in ["dispersion", "runs", "markov_lrt"]:
             L.append(f"| {labels[k]} | {test} | " + " | ".join(f"{v:.2f}" for v in R["power"][k][test]) + " |")
-    L += ["", "Coverage of nominal 95% intervals for the true loss rate (10-minute captures):", "",
+    L += ["", f"Coverage of nominal 95% intervals for the true loss rate ({C.COVERAGE_DURATION_S} s captures):", "",
           "| Network | Naive coverage | Adjusted coverage | Naive width | Adjusted width |", "|---|---|---|---|---|"]
     for k, cv in R["coverage"].items():
         L.append(f"| {labels[k]} | {cv['naive']*100:.1f}% | {cv['adjusted']*100:.1f}% | "
