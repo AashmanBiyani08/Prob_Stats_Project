@@ -18,6 +18,8 @@ def sequential_posteriors(loss, packet_rate, checkpoints_s):
     out = []
     for t in checkpoints_s:
         n = int(t * packet_rate)
+        if n > len(loss):    # checkpoint longer than the trace: skip instead of mislabelling
+            continue
         out.append(dict(t=t, **beta_posterior(int(loss[:n].sum()), n)))
     return out
 

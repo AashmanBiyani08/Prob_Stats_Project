@@ -21,7 +21,18 @@ def log(msg, t0):
     print(f"[{time.time() - t0:7.1f}s] {msg}", flush=True)
 
 
+def check_config():
+    """Fail early, with a clear message, on settings the pipeline cannot use."""
+    if len(C.SCENARIOS) < 2:
+        raise ValueError("at least two SCENARIOS are needed: the pipeline compares networks (objective O4)")
+    if C.SEQ_SCENARIO not in C.SCENARIOS:
+        raise ValueError(f"SEQ_SCENARIO={C.SEQ_SCENARIO!r} is not one of the SCENARIOS {list(C.SCENARIOS)}")
+    if C.DURATION_S * C.PACKET_RATE < 2 * C.PACKET_RATE * C.WINDOW_S:
+        raise ValueError("DURATION_S must cover at least two counting windows")
+
+
 def main():
+    check_config()
     t0 = time.time()
     os.makedirs(C.RESULTS_DIR, exist_ok=True)
     rng = np.random.default_rng(C.SEED)
@@ -37,6 +48,9 @@ def main():
         losses[k] = LM.simulate_losses(n_packets, rng=rng, **prm)
         counts[k] = LM.window_counts(losses[k], ppw)
         gaps[k] = LM.inter_loss_gaps(losses[k], C.PACKET_RATE, rng)
+        if losses[k].sum() < 3:
+            raise ValueError(f"{labels[k]} produced only {int(losses[k].sum())} losses in {C.DURATION_S} s; "
+                             "increase DURATION_S or the loss probabilities so the fits are possible")
 
     R = {"config": {"packet_rate": C.PACKET_RATE, "duration_s": C.DURATION_S, "seed": C.SEED},
          "scenarios": {}}
@@ -116,7 +130,7 @@ def main():
     power = {}
     for k, prm in params.items():
         power[k] = HT.power_study(prm, C.POWER_DURATIONS_S, C.POWER_REPS, C.PACKET_RATE, C.ALPHA, rng,
-                                  LM.simulate_losses)
+                                  LM.simulate_losses, window_packets=ppw)
         log(f"   power done for {labels[k]}", t0)
     R["power"] = {"durations_s": C.POWER_DURATIONS_S, **power}
 
@@ -130,8 +144,8 @@ def main():
     # ---------------- 6. figures ----------------
     log("Drawing figures", t0)
     d = C.RESULTS_DIR
-    P.timeline(counts, labels, f"{d}/fig1_loss_timeline.png", seconds=C.TIMELINE_S)
-    P.count_fits(counts, fits, labels, f"{d}/fig2_count_distribution_fits.png")
+    P.timeline(counts, labels, f"{d}/fig1_loss_timeline.png", seconds=C.TIMELINE_S, window_s=C.WINDOW_S)
+    P.count_fits(counts, fits, labels, f"{d}/fig2_count_distribution_fits.png", window_s=C.WINDOW_S)
     P.gap_survival(gaps, gap_fits, labels, f"{d}/fig3_gap_survival.png")
     P.posteriors(posts, seq, labels, f"{d}/fig4_bayesian_posteriors.png", seq_label=labels[C.SEQ_SCENARIO])
     P.markov_posteriors(mposts, labels, f"{d}/fig5_markov_posteriors.png")
@@ -157,6 +171,8 @@ def main():
 
 
 def fmt_p(p, B=None):
+    if p != p:   # NaN: the test could not be run on this data
+        return "n/a"
     if B is not None and p <= 1 / (B + 1) + 1e-12:
         return f"< {1 / B:.3g}"
     return "< 1e-10" if p < 1e-10 else f"{p:.3g}"

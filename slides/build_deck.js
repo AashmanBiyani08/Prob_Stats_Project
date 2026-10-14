@@ -159,9 +159,9 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
     ["Stage:", "Review 1 (Phase 1: simulation study)"],
     ["Team:", "[Member A], [Member B], [Member C]"],
   ], { fontSize: 16, paraSpaceAfter: 10 });
-  stat(s, 0.6, 5.15, 2.05, 1.1, String(N_NET), "network conditions", T.blue, COL[KEYS[0]]);
-  stat(s, 2.88, 5.15, 2.05, 1.1, num(CFG.packets * N_NET), "packets analysed", T.peach, COL[KEYS[1]]);
-  stat(s, 5.15, 5.15, 2.05, 1.1, "6", "objectives", T.rose, COL[KEYS[2]]);
+  stat(s, 0.6, 5.15, 2.05, 1.1, String(N_NET), "network conditions", T.blue, NETCOL[0]);
+  stat(s, 2.88, 5.15, 2.05, 1.1, num(CFG.packets * N_NET), "packets analysed", T.peach, NETCOL[1]);
+  stat(s, 5.15, 5.15, 2.05, 1.1, "6", "objectives", T.rose, NETCOL[2]);
   panel(s, 7.6, 1.35, 5.33, 5.4, "Sample trace");
   s.addChart(pres.charts.BAR, [{ name: "Losses per second", labels: SR.title.counts.map((_, i) => String(i + 1)), values: SR.title.counts }],
     chartOpts({ x: 7.7, y: 1.8, w: 5.13, h: 3.9, barDir: "col", barGapWidthPct: 20, chartColors: [COL[tk]], showLegend: false, showTitle: true,
@@ -321,7 +321,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
     ["O2", "EM algorithm for the two-phase mixture", "Posterior phase weight for each gap", "Iterate until the log-likelihood converges"],
     ["O3", "Wald-Wolfowitz runs test", "z = (R - E[R]) / sd(R)", "Few runs indicate clustering"],
     ["O3", "Markov chain likelihood ratio test", "G² = 2(ln L1 - ln L0) ~ χ²(1)", `Reject H0 if p < ${ALPHA}`],
-    ["O4", "Kruskal-Wallis, Mann-Whitney, chi-square", "H, U and χ² statistics", "Pairwise p-values multiplied by 3 (Bonferroni)"],
+    ["O4", "Kruskal-Wallis, Mann-Whitney, chi-square", "H, U and χ² statistics", `Pairwise p-values multiplied by ${(N_NET * (N_NET - 1)) / 2} (Bonferroni)`],
     ["O5", "Beta-Binomial conjugate update", "Beta(1 + k, 1 + n - k)", "Equal-tailed 95% credible interval"],
     ["O6", "Monte Carlo power and coverage", "Proportion of replicates", `${num(CFG.power_reps)} replicates; standard error ≤ ${mcSE.toFixed(3)}`],
   ], { x: 0.55, y: 1.6, w: 12.23, colW: [0.7, 3.9, 3.4, 4.23], rowH: 0.43, fontSize: 12, leftCols: [1, 2, 3] });

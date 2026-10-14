@@ -6,7 +6,7 @@
 
 Textbook models assume packets are lost independently (a Poisson process). This project tests that assumption, shows how it fails (losses come in bursts), quantifies the burstiness, and shows that ignoring it makes standard 95% intervals over-confident. It then corrects them with a design-effect adjustment.
 
-**Phase 1 (this repo):** a simulation study built on the Gilbert–Elliott two-state Markov loss model. The true parameters are known, so every estimator and test can be checked against the truth. **Phase 2:** real packet captures, analysed with the same pipeline.
+**Phase 1 (this repo):** a simulation study built on the Gilbert-Elliott two-state Markov loss model. The true parameters are known, so every estimator and test can be checked against the truth. **Phase 2:** real packet captures, analysed with the same pipeline.
 
 ## Networks studied (1 hour at 50 packets/s = 180,000 packets each)
 
@@ -30,12 +30,43 @@ Requires Python 3.9+. The seed is fixed at 2026, so results are reproducible. Ou
 | File | Contents | Owner |
 |---|---|---|
 | `src/config.py` | Seed, scenario parameters, Monte Carlo sizes | shared |
-| `src/loss_model.py` | Gilbert–Elliott simulation, windows, gaps, bursts | Member A |
+| `src/loss_model.py` | Gilbert-Elliott simulation, windows, gaps, bursts | Member A |
 | `src/distributions.py` | MLE: Poisson, Negative Binomial, Exponential; EM for the 2-phase hyperexponential | Member A |
-| `src/hypothesis_tests.py` | χ² GOF, dispersion, bootstrap KS, runs test, Markov LRT, Kruskal–Wallis / Mann–Whitney, power study | Member B |
-| `src/bayesian.py` | Beta–Binomial posteriors, sequential updating, Markov posteriors, predictive check, design effect, coverage study | Member C |
+| `src/hypothesis_tests.py` | χ² GOF, dispersion, bootstrap KS, runs test, Markov LRT, Kruskal-Wallis / Mann-Whitney, power study | Member B |
+| `src/bayesian.py` | Beta-Binomial posteriors, sequential updating, Markov posteriors, predictive check, design effect, coverage study | Member C |
 | `src/plots.py` | Figures | shared |
-| `run_case_study.py` | Full pipeline and auto-generated `summary.md` | shared |
+| `run_case_study.py` | Full pipeline and auto-generated `summary.md`; checks the config before running | shared |
+| `slides/export_deck_data.py` | Collects every number shown in the Review-1 deck from the pipeline output | shared |
+| `slides/build_deck.js` | Builds the Review-1 PowerPoint from `slides/deck_data.json` | shared |
+| `tests/test_model.py` | Edge cases, statistical checks and full-pipeline runs under different settings | shared |
+
+## Tests
+
+```bash
+pip install pytest
+python3 -m pytest tests -q
+```
+
+The 33 tests cover three areas:
+
+- Edge cases: empty traces, no losses, all losses and very short runs.
+- Statistical checks: the simulator against theory, recovery of known Negative Binomial, two-phase and Markov parameters, the Markov G² against SciPy's G-test, Type I error, and interval coverage.
+- Full pipeline runs: shorter traces, 2-s windows, 20 packets/s, another seed, two networks and four networks, plus a check that two runs give identical results.
+
+Invalid settings (one network, an unknown `SEQ_SCENARIO`, a network with fewer than 3 losses) stop with a clear error message.
+
+## Rebuilding the slides
+
+```bash
+python3 run_case_study.py
+python3 slides/export_deck_data.py
+cd slides && npm install && node build_deck.js
+```
+
+## Known limitations
+
+- The index-of-dispersion test compares counts with a Poisson law. Counts of 50 independent packets are Binomial, whose variance is slightly below the mean, so the test is conservative: under independence it rejects about 1% of the time instead of 5%. It never over-states burstiness.
+- The runs test and the Markov likelihood-ratio test use large-sample approximations. In very short captures with few losses, their false-rejection rate ranges from about 1% to 9% instead of exactly 5%. For the full one-hour traces it is close to 5%.
 
 ## Headline findings
 

@@ -21,7 +21,7 @@ from src import distributions as D               # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
-TITLE_SCENARIO = "S3_Mobile"   # trace shown on the title slide
+TITLE_SCENARIO = None         # trace shown on the title slide (None = last scenario)
 TITLE_SECONDS = 120
 COMPARE_SECONDS = 60           # length of the independent-vs-bursty comparison
 COMPARE_SEED = 7               # seed for the independent comparison stream
@@ -78,8 +78,8 @@ def main():
         )
 
     # title slide trace
-    out["series"]["title"] = dict(scenario=TITLE_SCENARIO, seconds=TITLE_SECONDS,
-                                  counts=counts[TITLE_SCENARIO][:TITLE_SECONDS].tolist())
+    tk = TITLE_SCENARIO if TITLE_SCENARIO in counts else keys[-1]
+    out["series"]["title"] = dict(scenario=tk, seconds=TITLE_SECONDS, counts=counts[tk][:TITLE_SECONDS].tolist())
 
     # same long-run rate, independent vs bursty
     rate = float(losses[seq_k].mean())

@@ -18,6 +18,10 @@ def theoretical_loss_rate(p_gb, p_bg, h_g, h_b, **_):
 
 def simulate_states(n, p_gb, p_bg, rng):
     """Simulate n packets' hidden states (True = Bad) using geometric sojourn times."""
+    if not (0 < p_gb <= 1 and 0 < p_bg <= 1):
+        raise ValueError(f"transition probabilities must be in (0, 1], got p_gb={p_gb}, p_bg={p_bg}")
+    if n <= 0:
+        return np.zeros(0, dtype=bool)
     pi_b = stationary_bad_prob(p_gb, p_bg)
     state = rng.random() < pi_b
     mean_cycle = 1 / p_gb + 1 / p_bg
@@ -39,6 +43,8 @@ def simulate_states(n, p_gb, p_bg, rng):
 
 def simulate_losses(n, p_gb, p_bg, h_g, h_b, rng, **_):
     """Return a boolean array of length n: True where the packet was lost."""
+    if not (0 <= h_g <= 1 and 0 <= h_b <= 1):
+        raise ValueError(f"loss probabilities must be in [0, 1], got h_g={h_g}, h_b={h_b}")
     bad = simulate_states(n, p_gb, p_bg, rng)
     return rng.random(n) < np.where(bad, h_b, h_g)
 

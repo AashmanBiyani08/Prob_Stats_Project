@@ -22,12 +22,16 @@ def chisq_gof_counts(x, pmf, n_params):
     o, e = np.array(o), np.array(e)
     stat = ((o - e) ** 2 / e).sum()
     df = len(e) - 1 - n_params
-    return dict(stat=stat, df=df, p=stats.chi2.sf(stat, df), bins=len(e))
+    # too few pooled bins leaves no degrees of freedom: the test cannot be run
+    p = stats.chi2.sf(stat, df) if df >= 1 else float("nan")
+    return dict(stat=stat, df=df, p=p, bins=len(e))
 
 
 def dispersion_test(x):
     """Index-of-dispersion test. H0: Poisson (var = mean). Stat = (n-1) s^2 / xbar ~ chi2(n-1)."""
     n, m, v = len(x), x.mean(), x.var(ddof=1)
+    if m == 0 or n < 2:      # no losses (or one window): the ratio is undefined
+        return dict(D=float("nan"), stat=float("nan"), df=n - 1, p=float("nan"))
     stat = (n - 1) * v / m
     return dict(D=v / m, stat=stat, df=n - 1, p=stats.chi2.sf(stat, n - 1))
 
@@ -66,6 +70,8 @@ def runs_test(loss):
     x = loss.astype(np.int8)
     n1 = int(x.sum()); n0 = len(x) - n1; n = n1 + n0
     runs = 1 + int(np.count_nonzero(np.diff(x)))
+    if n1 == 0 or n0 == 0:   # a single run: no evidence either way
+        return dict(runs=runs, expected=1.0, z=0.0, p=1.0)
     mu = 2 * n1 * n0 / n + 1
     var = 2 * n1 * n0 * (2 * n1 * n0 - n) / (n ** 2 * (n - 1))
     z = (runs - mu) / np.sqrt(var)
@@ -91,6 +97,11 @@ def markov_lrt(loss):
     n_l = n_nl + n_ll; n = n_nn + n_nl + n_ln + n_ll
     p = n_l / n
     ll0 = xlogy(n_l, p) + xlogy(n - n_l, 1 - p)
+    if n_nn + n_nl == 0 or n_ln + n_ll == 0 or n_l in (0, n):
+        # one of the two conditional probabilities cannot be estimated: no test possible
+        a = n_nl / (n_nn + n_nl) if n_nn + n_nl else float("nan")
+        b = n_ll / (n_ln + n_ll) if n_ln + n_ll else float("nan")
+        return dict(p_L_given_N=a, p_L_given_L=b, G2=0.0, df=1, p=1.0)
     a = n_nl / (n_nn + n_nl); b = n_ll / (n_ln + n_ll)
     ll1 = xlogy(n_nl, a) + xlogy(n_nn, 1 - a) + xlogy(n_ll, b) + xlogy(n_ln, 1 - b)
     g2 = 2 * (ll1 - ll0)
@@ -116,20 +127,21 @@ def compare_scenarios(counts_by_scn, losses_by_scn):
 
 
 # ---------- Monte Carlo power study ----------
-def power_study(params, durations_s, reps, packet_rate, alpha, rng, simulate):
-    """Probability that each test rejects its null (independence) for a capture of a given length."""
+def power_study(params, durations_s, reps, packet_rate, alpha, rng, simulate, window_packets=None):
+    """Probability that each test rejects its null (independence) for a capture of a given length.
+    The dispersion test uses windows of `window_packets` packets (default: one second)."""
+    window_packets = window_packets or packet_rate
     out = {"dispersion": [], "runs": [], "markov_lrt": []}
     for T in durations_s:
         n = T * packet_rate
         rej = np.zeros(3)
-        valid = 0
         for _ in range(reps):
             loss = simulate(n, rng=rng, **params)
             if loss.sum() < 2:
                 continue
-            valid += 1
-            c = loss.reshape(-1, packet_rate).sum(axis=1)
-            if c.mean() > 0 and dispersion_test(c)["p"] < alpha:
+            m = len(loss) // window_packets
+            c = loss[: m * window_packets].reshape(m, window_packets).sum(axis=1)
+            if m >= 2 and c.mean() > 0 and dispersion_test(c)["p"] < alpha:
                 rej[0] += 1
             if runs_test(loss)["p"] < alpha:
                 rej[1] += 1

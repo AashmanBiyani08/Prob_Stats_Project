@@ -31,6 +31,8 @@ def aic(fit):
 
 # ---------- inter-loss gaps ----------
 def fit_exponential(g):
+    if len(g) == 0:
+        raise ValueError("need at least one gap between losses to fit an exponential")
     lam = 1 / g.mean()
     return dict(rate=lam, loglik=stats.expon.logpdf(g, scale=1 / lam).sum(), k=1)
 
@@ -44,6 +46,8 @@ def fit_hyperexp(g, iters=300, tol=1e-9):
 
     Phase 1 (fast rate) = gaps inside a loss burst; phase 2 (slow rate) = gaps between bursts.
     """
+    if len(g) < 2:
+        raise ValueError("need at least two gaps between losses to fit a two-phase mixture")
     q = np.quantile(g, [0.25, 0.75])
     w, l1, l2 = 0.5, 1 / max(q[0], 1e-6), 1 / q[1]
     prev = -np.inf
