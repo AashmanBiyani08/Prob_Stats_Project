@@ -7,6 +7,13 @@ const pptxgen = require("pptxgenjs");
 const DATA = require(path.join(__dirname, "deck_data.json"));
 
 const CFG = DATA.config, R = DATA.results, SR = DATA.series;
+
+// Team shown on the title slide: [name, registration number]
+const TEAM = [
+  ["Kyra Panwar", "25BBS"],
+  ["Shashank Tiwari", "25BDS0053"],
+  ["Aashman Biyani", "25BBS0100"],
+];
 const KEYS = DATA.keys;
 const SCN = (k) => DATA.scenarios[k];
 const RS = (k) => R.scenarios[k];
@@ -152,17 +159,23 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
   const s = base("PROBABILITY AND STATISTICS CASE STUDY", null,
     `Introduce the team and the course. This is Review 1. The results come from Phase 1, a simulation study with known parameters. Phase 2 will apply the same analysis to measured network traces.`);
   text(s, 0.6, 1.35, 6.6, 0.5, "TITLE PAGE", { fontFace: "Cambria", bold: true, fontSize: 24, align: "center" });
-  bullets(s, 0.6, 2.0, 6.6, 2.6, [
+  bullets(s, 0.6, 1.95, 6.6, 2.45, [
     ["Course:", "BAMAT207 Probability and Statistics"],
     ["Project title:", "Statistical Modelling of Packet-Loss Patterns in Computer Networks"],
     ["Focus:", "Distribution fitting, tests of independence and Bayesian estimation"],
     ["Tracks:", "Track 3 (core), Track 1 and Track 5 (supporting)"],
     ["Stage:", "Review 1 (Phase 1: simulation study)"],
-    ["Team:", "[Add team names]"],
-  ], { fontSize: 16, paraSpaceAfter: 10 });
-  stat(s, 0.6, 5.15, 2.05, 1.1, String(N_NET), "network conditions", T.blue, NETCOL[0]);
-  stat(s, 2.88, 5.15, 2.05, 1.1, num(CFG.packets * N_NET), "packets analysed", T.peach, NETCOL[1]);
-  stat(s, 5.15, 5.15, 2.05, 1.1, "6", "objectives", T.rose, NETCOL[2]);
+  ], { fontSize: 15, paraSpaceAfter: 7 });
+  text(s, 0.6, 4.45, 6.6, 0.3, "TEAM", { fontSize: 13, bold: true, color: NAVY });
+  TEAM.forEach(([name, reg], i) => {
+    const x = 0.6 + i * 2.27;
+    s.addShape(S.ROUNDED_RECTANGLE, { x, y: 4.8, w: 2.05, h: 0.85, rectRadius: 0.12, fill: { color: "FFFFFF" }, line: { color: NAVY, width: 1 } });
+    s.addText([{ text: name, options: { bold: true, fontSize: 14, color: INK, breakLine: true } }, { text: reg, options: { fontSize: 12, color: MUTED } }],
+      { x, y: 4.8, w: 2.05, h: 0.85, align: "center", valign: "middle", isTextBox: true, margin: 2 });
+  });
+  stat(s, 0.6, 5.85, 2.05, 0.95, String(N_NET), "network conditions", T.blue, NETCOL[0]);
+  stat(s, 2.87, 5.85, 2.05, 0.95, num(CFG.packets * N_NET), "packets analysed", T.peach, NETCOL[1]);
+  stat(s, 5.14, 5.85, 2.05, 0.95, "6", "objectives", T.rose, NETCOL[2]);
   panel(s, 7.6, 1.35, 5.33, 5.4, "Sample trace");
   s.addChart(pres.charts.BAR, [{ name: "Losses per second", labels: SR.title.counts.map((_, i) => String(i + 1)), values: SR.title.counts }],
     chartOpts({ x: 7.7, y: 1.8, w: 5.13, h: 3.9, barDir: "col", barGapWidthPct: 20, chartColors: [COL[tk]], showLegend: false, showTitle: true,
