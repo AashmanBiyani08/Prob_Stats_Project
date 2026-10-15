@@ -33,5 +33,14 @@ HEAVY_LOSS_K = 5            # "heavy" window = at least this many losses (poster
 SEQ_SCENARIO = "S2_WiFi"    # scenario used to show sequential updating
 SEQ_CHECKPOINTS_S = [10, 60, 600, 3600]
 TIMELINE_S = 300            # seconds of traffic shown in the timeline figure
+POWER_TARGET = 0.8          # power level a capture length should reach
+POWER_RECOMMEND = 0.95      # Phase 2 length: shortest capture where every test reaches this power
+
+# Interactive app (app.py)
+APP_DURATIONS_S = [60, 300, 600, 1800, 3600]                    # choices for "How long to watch"
+APP_N_BOOT_KS = 199                                             # smaller KS bootstrap so the app stays quick
+APP_SEQ_CHECKPOINTS_S = [10, 30, 60, 120, 300, 600, 1800, 3600]  # points on the "learning as we watch" chart
+APP_STRIP_PACKETS = 700                                         # packets drawn as squares
+APP_COVERAGE_REPS = [100, 200, 500, 1000]                       # choices for the coverage button
 
 RESULTS_DIR = "results"

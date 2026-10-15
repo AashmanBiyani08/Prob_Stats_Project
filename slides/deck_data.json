@@ -12,7 +12,9 @@
   "n_boot_ks": 2000,
   "ordering_draws": 200000,
   "heavy_k": 5,
-  "packets": 180000
+  "packets": 180000,
+  "power_target": 0.8,
+  "power_recommend": 0.95
  },
  "keys": [
   "S1_Wired",

@@ -48,10 +48,11 @@ const maxWinKey = KEYS.reduce((a, k) => (SCN(k).max_losses_in_window > SCN(a).ma
 const durs = R.power.durations_s;
 const TESTS = ["dispersion", "runs", "markov_lrt"];
 const firstAt = (arr, thr) => { const i = arr.findIndex((v) => v >= thr); return i < 0 ? null : durs[i]; };
-const recIdx = durs.findIndex((_, i) => KEYS.every((k) => TESTS.every((t) => R.power[k][t][i] >= 0.95)));
+const recIdx = durs.findIndex((_, i) => KEYS.every((k) => TESTS.every((t) => R.power[k][t][i] >= CFG.power_recommend)));
 const recDur = recIdx < 0 ? durs[durs.length - 1] : durs[recIdx];
 const recMinPower = Math.min(...KEYS.flatMap((k) => TESTS.map((t) => R.power[k][t][recIdx < 0 ? durs.length - 1 : recIdx])));
 const mcSE = Math.sqrt(0.25 / CFG.power_reps);
+const PT = CFG.power_target;   // power target from config.py
 
 // ---------- deck ----------
 const pres = new pptxgen();
@@ -547,18 +548,18 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // =====================================================================
 // 14. Power
 {
-  const runsBest = KEYS.filter((k) => firstAt(R.power[k].runs, 0.8) <= Math.min(...TESTS.map((t) => firstAt(R.power[k][t], 0.8) ?? Infinity))).length;
+  const runsBest = KEYS.filter((k) => firstAt(R.power[k].runs, PT) <= Math.min(...TESTS.map((t) => firstAt(R.power[k][t], PT) ?? Infinity))).length;
   const s = base("POWER ANALYSIS", "Member B",
-    `Power is the probability of rejecting independence when the losses really are dependent. For each capture length we simulated ${num(CFG.power_reps)} captures and counted how often each test rejected. The table shows the shortest tested length with power of at least 0.80. Based on this, Phase 2 should record at least ${minutes(recDur)} per network.`);
+    `Power is the probability of rejecting independence when the losses really are dependent. For each capture length we simulated ${num(CFG.power_reps)} captures and counted how often each test rejected. The table shows the shortest tested length with power of at least ${PT.toFixed(2)}. Based on this, Phase 2 should record at least ${minutes(recDur)} per network.`);
   panel(s, 0.4, 1.1, 7.2, 5.8, "Power of the runs test by capture length");
   const D = durs.map((d) => d + " s");
   s.addChart(pres.charts.LINE, [
     ...KEYS.map((k) => ({ name: SHORT[k], labels: D, values: R.power[k].runs })),
-    { name: "0.80 level", labels: D, values: D.map(() => 0.8) }],
+    { name: `${PT.toFixed(2)} level`, labels: D, values: D.map(() => PT) }],
     chartOpts({ x: 0.5, y: 1.55, w: 7.0, h: 5.25, chartColors: [...KEYS.map((k) => COL[k]), GREY], lineSize: 2.25, lineDataSymbol: "circle", lineDataSymbolSize: 7,
       showLegend: true, legendPos: "b", valAxisMinVal: 0, valAxisMaxVal: 1, valAxisLabelFormatCode: "0%", catAxisTitle: "Capture length", showCatAxisTitle: true, valAxisTitle: "Power", showValAxisTitle: true }));
-  panel(s, 7.9, 1.1, 5.03, 3.05, "Shortest capture with power ≥ 0.80");
-  const cell = (arr) => { const d = firstAt(arr, 0.8); return d === null ? "> " + durs[durs.length - 1] + " s" : d + " s"; };
+  panel(s, 7.9, 1.1, 5.03, 3.05, `Shortest capture with power ≥ ${PT.toFixed(2)}`);
+  const cell = (arr) => { const d = firstAt(arr, PT); return d === null ? "> " + durs[durs.length - 1] + " s" : d + " s"; };
   table(s, [["Network", "Dispersion", "Runs", "Markov"], ...KEYS.map((k) => [SHORT[k], cell(R.power[k].dispersion), cell(R.power[k].runs), cell(R.power[k].markov_lrt)])],
     { x: 8.05, y: 1.6, w: 4.73, colW: [1.3, 1.2, 1.0, 1.23], rowH: 0.45, fontSize: 12 });
   text(s, 8.05, 3.55, 4.73, 0.5, (runsBest === N_NET ? "The runs test needs the shortest capture for every network." : `The runs test needs the shortest capture for ${runsBest} of ${N_NET} networks.`), { fontSize: 12, color: MUTED });

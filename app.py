@@ -55,8 +55,16 @@ coin_mode = st.sidebar.toggle("2. Turn bursts OFF (coin-flip mode)", value=False
                               help="Keeps the same average loss rate, but every packet is lost independently, "
                                    "like a separate coin flip. Use it to compare.")
 
-duration_label = st.sidebar.select_slider("3. How long to watch", options=["1 min", "5 min", "10 min", "30 min", "1 hour"], value="1 hour")
-duration = {"1 min": 60, "5 min": 300, "10 min": 600, "30 min": 1800, "1 hour": 3600}[duration_label]
+def nice_time(s):
+    """60 -> '1 min', 3600 -> '1 hour', 45 -> '45 s'."""
+    if s % 3600 == 0:
+        return f"{s // 3600} hour" + ("s" if s > 3600 else "")
+    return f"{s // 60} min" if s % 60 == 0 else f"{s} s"
+
+
+durations = sorted(set(C.APP_DURATIONS_S) | {C.DURATION_S})
+duration = st.sidebar.select_slider("3. How long to watch", options=durations, value=C.DURATION_S, format_func=nice_time)
+duration_label = nice_time(duration)
 
 with st.sidebar.expander("⚙️ Fine-tune the network (optional)"):
     st.caption("The network switches between a Good mood and a Bad mood.")
@@ -70,7 +78,7 @@ if "seed" not in st.session_state:
 c1, c2 = st.sidebar.columns(2)
 if c1.button("🎲 New run", use_container_width=True):
     st.session_state.seed += 1
-if c2.button("↩️ Seed 2026", use_container_width=True):
+if c2.button(f"↩️ Seed {C.SEED}", use_container_width=True):
     st.session_state.seed = C.SEED
 st.sidebar.caption(f"Random seed: {st.session_state.seed}. The same seed always gives the same result.")
 
@@ -113,10 +121,10 @@ def experiment(key, p_gb, p_bg, h_g, h_b, duration, seed, coin):
         heavy_pois=float(len(counts) * stats.poisson.sf(hk - 1, lam)),
         heavy_nb=float(len(counts) * stats.nbinom.sf(hk - 1, nb["r"], nb["p"])),
         gaps=gaps,
-        ks=HT.ks_exponential_bootstrap(gaps, 199, np.random.default_rng(seed + 1)) if len(gaps) >= 10 else None,
+        ks=HT.ks_exponential_bootstrap(gaps, C.APP_N_BOOT_KS, np.random.default_rng(seed + 1)) if len(gaps) >= 10 else None,
         naive=BY.beta_posterior(k, n),
         adjusted=BY.adjusted_posterior(loss, BLOCK_S * RATE),
-        seq=BY.sequential_posteriors(loss, RATE, [t for t in [10, 30, 60, 120, 300, 600, 1800, 3600] if t <= duration]),
+        seq=BY.sequential_posteriors(loss, RATE, [t for t in C.APP_SEQ_CHECKPOINTS_S if t <= duration]),
     )
     return out
 
@@ -162,16 +170,16 @@ with tab1:
     loss = E["loss"]
     first = int(np.flatnonzero(loss)[0])
     start = max(0, first - 40)
-    show = loss[start:start + 700]
+    show = loss[start:start + C.APP_STRIP_PACKETS]
     cells = "".join(f'<span style="background:{BAD if x else DELIV}"></span>' for x in show)
     st.subheader("Every square is one packet")
-    st.markdown(f'<div class="legend">Packets {start + 1:,} to {start + len(show):,} (14 seconds) '
+    st.markdown(f'<div class="legend">Packets {start + 1:,} to {start + len(show):,} ({len(show) / RATE:g} seconds) '
                 f'<span style="background:{DELIV}"></span>delivered <span style="background:{BAD}"></span>lost</div>'
                 f'<div class="packets">{cells}</div>', unsafe_allow_html=True)
     st.caption("Look for red squares sitting next to each other. Those are bursts. In coin-flip mode they are scattered.")
 
     st.subheader("Lost packets in each second")
-    secs = min(300, len(E["counts"]))
+    secs = min(C.TIMELINE_S, len(E["counts"]))
     df = pd.DataFrame({"second": np.arange(1, secs + 1), "lost": E["counts"][:secs]})
     chart = alt.Chart(df).mark_bar(color=BAD).encode(
         x=alt.X("second:Q", title="time (seconds)"), y=alt.Y("lost:Q", title="packets lost"),
@@ -206,11 +214,13 @@ with tab2:
              f"{r['runs']:,} runs seen vs {r['expected']:,.0f} expected",
              f"Wald-Wolfowitz runs test, z = {r['z']:.1f}, {p_txt(r['p'])}")
     with b:
-        heavy_ok = E["heavy_obs"] <= max(3 * E["heavy_pois"], E["heavy_pois"] + 5)
+        # Poisson tail test: under the coin-flip model the count of heavy seconds is itself ~ Poisson(expected)
+        heavy_p = stats.poisson.sf(E["heavy_obs"] - 1, E["heavy_pois"]) if E["heavy_obs"] > 0 else 1.0
+        heavy_ok = heavy_p >= ALPHA
         card(heavy_ok, f"Heavy-seconds check",
              f"How many seconds had {C.HEAVY_LOSS_K} or more losses? The Poisson (coin-flip) model predicts a number.",
              f"{E['heavy_obs']} seen vs {E['heavy_pois']:.1f} predicted",
-             f"Negative Binomial (bursty) model predicts {E['heavy_nb']:.0f}")
+             f"Negative Binomial (bursty) model predicts {E['heavy_nb']:.0f}; {p_txt(heavy_p)}")
         card(not (mk["p"] < ALPHA), "After-a-loss check",
              "Is the next packet more likely to be lost right after a loss?",
              f"{pLN * 100:.2f}% after a delivery vs {pLL * 100:.1f}% after a loss",
@@ -240,7 +250,7 @@ with tab2:
     with st.expander("Bonus check: the gaps between losses"):
         g = E["gaps"]
         st.write(f"Average gap: **{g.mean():.2f} s**. For coin-flip losses the middle (median) gap would be about "
-                 f"**{0.693 * g.mean():.2f} s**. The real median gap is **{np.median(g):.3f} s**.")
+                 f"**{np.log(2) * g.mean():.2f} s**. The real median gap is **{np.median(g):.3f} s**.")
         if E["ks"] is not None:
             st.write(f"Kolmogorov-Smirnov test against the exponential (coin-flip) model: D = {E['ks']['D']:.3f}, "
                      f"bootstrap p = {E['ks']['p']:.3f}.")
@@ -275,9 +285,9 @@ with tab3:
                 unsafe_allow_html=True)
 
     st.subheader("Test the safety ranges many times")
-    cov_dur = min(duration, 600)
-    reps = st.select_slider("Number of pretend recordings", options=[100, 200, 500, 1000], value=200)
-    if st.button(f"▶ Run {reps} pretend recordings of {cov_dur // 60} minutes each", type="primary"):
+    cov_dur = min(duration, C.COVERAGE_DURATION_S)
+    reps = st.select_slider("Number of pretend recordings", options=C.APP_COVERAGE_REPS, value=C.APP_COVERAGE_REPS[1])
+    if st.button(f"▶ Run {reps} pretend recordings of {nice_time(cov_dur)} each", type="primary"):
         rng = np.random.default_rng(st.session_state.seed + 7)
         if coin_mode:
             sim, prm = (lambda n, rng, **_: rng.random(n) < tp), {}
@@ -311,7 +321,8 @@ with tab4:
         st.info("Run `python3 run_case_study.py` first to create the full study results.")
     else:
         R = json.load(open(path))
-        st.subheader("The full study: 3 networks, 1 hour each, seed 2026")
+        cfg = R["config"]
+        st.subheader(f"The full study: {len(R['scenarios'])} networks, {nice_time(cfg['duration_s'])} each, seed {cfg['seed']}")
         rows = []
         for k, s in R["scenarios"].items():
             dsc, t, b = s["descriptive"], s["tests"], s["bayes"]
@@ -329,16 +340,16 @@ with tab4:
         pw = pd.DataFrame([{"seconds": d_, "network": R["scenarios"][k]["label"], "power": R["power"][k]["runs"][i]}
                            for k in R["scenarios"] for i, d_ in enumerate(R["power"]["durations_s"])])
         pc = alt.Chart(pw).mark_line(point=True, strokeWidth=2.5).encode(
-            x=alt.X("seconds:Q", scale=alt.Scale(type="log", domain=[15, 600], nice=False), title="recording length (seconds, log scale)",
+            x=alt.X("seconds:Q", scale=alt.Scale(type="log", domain=[min(R["power"]["durations_s"]), max(R["power"]["durations_s"])], nice=False), title="recording length (seconds, log scale)",
                     axis=alt.Axis(values=R["power"]["durations_s"])),
             y=alt.Y("power:Q", title="power", scale=alt.Scale(domain=[0, 1])),
             color=alt.Color("network:N", sort=list(labels_in_order),
                             scale=alt.Scale(domain=list(labels_in_order), range=["#2A6F97", "#E07A1F", "#B23A48"][:len(labels_in_order)]),
                             legend=alt.Legend(orient="bottom", title=None)),
             tooltip=["network", "seconds", "power"])
-        st.altair_chart((pc + alt.Chart(pd.DataFrame({"y": [0.8]})).mark_rule(strokeDash=[6, 4], color=GREY).encode(y="y:Q")).properties(height=300),
+        st.altair_chart((pc + alt.Chart(pd.DataFrame({"y": [C.POWER_TARGET]})).mark_rule(strokeDash=[6, 4], color=GREY).encode(y="y:Q")).properties(height=300),
                         use_container_width=True)
-        st.caption("Runs test, 2,000 simulated recordings per point. The dashed line is the 80% target.")
+        st.caption(f"Runs test, {C.POWER_REPS:,} simulated recordings per point. The dashed line is the {C.POWER_TARGET:.0%} target.")
 
 with st.expander("ℹ️ How does the pretend network work?"):
     st.markdown("""
