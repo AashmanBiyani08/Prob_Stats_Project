@@ -315,18 +315,18 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
     `The table lists the method used for each objective. The Kolmogorov-Smirnov test uses a parametric bootstrap, because the rate is calculated from the sample being tested. The Markov test is a likelihood ratio test. By Wilks' theorem, G squared then follows a chi-square distribution with one degree of freedom.`);
   panel(s, 0.4, 1.1, 12.53, 5.0, "Methods by objective");
   table(s, [
-    ["Obj.", "Method", "Formula", "What it means"],
-    ["O1", "Chi-square goodness of fit", "χ² = Σ (O − E)² / E", "Adds up how far observed counts are from expected ones. Big = poor fit."],
-    ["O1", "Index of dispersion", "D = s² / x̄", "Spread ÷ average. About 1 if random; above 1 means clumping."],
-    ["O2", "Kolmogorov-Smirnov (bootstrap)", "D = max |Fn(t) − F(t)|", `Biggest gap between the data curve and the model curve (${num(CFG.n_boot_ks)} resamples).`],
-    ["O2", "EM algorithm", "guess → update → repeat", "Splits gaps into short (inside a burst) and long (between bursts)."],
-    ["O3", "Runs test", "z = (R − E[R]) / sd(R)", "Runs seen vs runs expected. Very negative z = losses stick together."],
-    ["O3", "Markov likelihood ratio", "G² = 2 (ln L1 − ln L0)", "How much better “a loss affects the next” fits than “no effect”."],
-    ["O4", "Kruskal-Wallis, Mann-Whitney", "p × number of pairs", `Do the networks differ? Bonferroni (× ${(N_NET * (N_NET - 1)) / 2}) avoids false alarms.`],
-    ["O5", "Bayesian update", "Beta(1 + k, 1 + n − k)", "Start knowing nothing, then add k losses and n − k deliveries."],
-    ["O6", "Monte Carlo", "SE = √(p(1 − p) / N)", `Repeat ${num(CFG.power_reps)} times and count how often it works (error ≤ ${mcSE.toFixed(3)}).`],
+    ["Obj.", "Method", "Formula", "What it does"],
+    ["O1", "Chi-square goodness of fit", "χ² = Σ (O − E)² / E", "Checks if the model's prediction matches what really happened."],
+    ["O1", "Index of dispersion", "D = s² / x̄", "Checks if losses are more spread out than random (clumping)."],
+    ["O2", "Kolmogorov-Smirnov (bootstrap)", "D = max |Fn(t) − F(t)|", "Checks if the waiting times between losses are random."],
+    ["O2", "EM algorithm", "guess → update → repeat", "Splits the waiting times into short (in a burst) and long ones."],
+    ["O3", "Runs test", "z = (R − E[R]) / sd(R)", "Checks if lost packets stick together in clumps."],
+    ["O3", "Markov likelihood ratio", "G² = 2 (ln L1 − ln L0)", "Checks if one loss makes the next loss more likely."],
+    ["O4", "Kruskal-Wallis, Mann-Whitney", "p × number of pairs", "Checks if the networks are really different, not just by luck."],
+    ["O5", "Bayesian update", "Beta(1 + k, 1 + n − k)", "Estimates the loss rate and how sure we are."],
+    ["O6", "Monte Carlo", "SE = √(p(1 − p) / N)", `Repeats the experiment ${num(CFG.power_reps)} times to check our methods work.`],
   ], { x: 0.55, y: 1.6, w: 12.23, colW: [0.7, 3.2, 2.9, 5.43], rowH: 0.43, fontSize: 12, leftCols: [1, 2, 3] });
-  pill(s, 0.4, 6.28, 4.0, 0.65, "AIC = 2k − 2 ln L", "Fit score: lower wins; extra parameters cost points.", T.sand);
+  pill(s, 0.4, 6.28, 4.0, 0.65, "AIC = 2k − 2 ln L", "Picks the better model: the lower score wins.", T.sand);
   pill(s, 4.6, 6.28, 4.0, 0.65, "Count window:", `${CFG.window_s} s = ${PPW} packets, ${num(N_WIN)} windows`, T.blue);
   pill(s, 8.8, 6.28, 4.13, 0.65, "Design-effect blocks:", `${CFG.block_s} s = ${CFG.block_s * CFG.packet_rate} packets`, T.green);
 }
