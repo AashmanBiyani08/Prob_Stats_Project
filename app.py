@@ -76,9 +76,9 @@ with st.sidebar.expander("⚙️ Fine-tune the network (optional)"):
 if "seed" not in st.session_state:
     st.session_state.seed = C.SEED
 c1, c2 = st.sidebar.columns(2)
-if c1.button("🎲 New run", use_container_width=True):
+if c1.button("🎲 New run", width="stretch"):
     st.session_state.seed += 1
-if c2.button(f"↩️ Seed {C.SEED}", use_container_width=True):
+if c2.button(f"↩️ Seed {C.SEED}", width="stretch"):
     st.session_state.seed = C.SEED
 st.sidebar.caption(f"Random seed: {st.session_state.seed}. The same seed always gives the same result.")
 
@@ -184,7 +184,7 @@ with tab1:
     chart = alt.Chart(df).mark_bar(color=BAD).encode(
         x=alt.X("second:Q", title="time (seconds)"), y=alt.Y("lost:Q", title="packets lost"),
         tooltip=["second", "lost"]).properties(height=260)
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
     st.markdown('<div class="explain">If losses were random, the bars would be small and evenly spread. '
                 'Tall bars with long empty stretches between them mean losses arrive in clumps.</div>', unsafe_allow_html=True)
 
@@ -243,7 +243,7 @@ with tab2:
         x=alt.X("losses in a second:O"), y=alt.Y("probability:Q", scale=alt.Scale(type="log", domain=[floor, 1]), title="probability (log scale)", axis=alt.Axis(tickCount=4, format=".0e")),
         color=alt.Color("series:N", scale=colors, legend=alt.Legend(orient="bottom", title=None)),
         tooltip=["series", "losses in a second", alt.Tooltip("probability:Q", format=".2g")]).properties(height=340)
-    st.altair_chart(line, use_container_width=True)
+    st.altair_chart(line, width="stretch")
     st.markdown('<div class="explain">The grey line is what coin-flip losses would look like. If the red line (reality) runs far above it '
                 'on the right, then busy seconds happen much more often than coin flips allow.</div>', unsafe_allow_html=True)
 
@@ -273,7 +273,7 @@ with tab3:
         color=alt.Color("hit:N", scale=alt.Scale(domain=[True, False], range=[GOOD, GREY]), legend=None),
         tooltip=["range", alt.Tooltip("low:Q", format=".3f"), alt.Tooltip("high:Q", format=".3f"), "result"])
     rule = alt.Chart(pd.DataFrame({"true": [tp * 100]})).mark_rule(color=BAD, strokeDash=[6, 4], strokeWidth=2.5).encode(x="true:Q")
-    st.altair_chart((bars + rule).properties(height=150), use_container_width=True)
+    st.altair_chart((bars + rule).properties(height=150), width="stretch")
     for _, row in rows.iterrows():
         st.write(f"**{row['name']}:** {row['low']:.3f}% to {row['high']:.3f}%, {row['result']}")
     st.caption(f"Red dashed line: the true loss rate, {tp * 100:.3f}%.")
@@ -301,7 +301,7 @@ with tab3:
             color=alt.Color("range:N", scale=alt.Scale(domain=["Normal range", "Corrected range"], range=[GREY, GOOD]), legend=None))
         text = cb.mark_text(dy=-8, fontWeight="bold").encode(text=alt.Text("coverage:Q", format=".1f"))
         target = alt.Chart(pd.DataFrame({"y": [95]})).mark_rule(color=BAD, strokeDash=[6, 4]).encode(y="y:Q")
-        st.altair_chart((cb + text + target).properties(height=320), use_container_width=True)
+        st.altair_chart((cb + text + target).properties(height=320), width="stretch")
         st.write(f"A 95% range should catch the truth in about 95% of recordings (red line). "
                  f"Normal range: **{cov['naive'] * 100:.1f}%**. Corrected range: **{cov['adjusted'] * 100:.1f}%**.")
     else:
@@ -311,7 +311,7 @@ with tab3:
     sq = pd.DataFrame([{"seconds watched": s["t"], "estimate": s["mean"] * 100, "low": s["ci_low"] * 100, "high": s["ci_high"] * 100} for s in E["seq"]])
     band = alt.Chart(sq).mark_area(opacity=0.25, color=NAVY).encode(x=alt.X("seconds watched:Q", scale=alt.Scale(type="log")), y=alt.Y("low:Q", title="loss rate (%)"), y2="high:Q")
     ln = alt.Chart(sq).mark_line(point=True, color=NAVY).encode(x="seconds watched:Q", y="estimate:Q", tooltip=["seconds watched", alt.Tooltip("estimate:Q", format=".2f")])
-    st.altair_chart((band + ln).properties(height=240), use_container_width=True)
+    st.altair_chart((band + ln).properties(height=240), width="stretch")
     st.caption("We start knowing nothing (a uniform Beta(1,1) prior). The shaded band narrows as more packets arrive.")
 
 # ------------------------------------------------------------------ tab 4
@@ -333,7 +333,7 @@ with tab4:
                          "Design effect": round(b["adjusted_posterior"]["deff"], 2),
                          "Normal range right": f"{R['coverage'][k]['naive'] * 100:.1f}%",
                          "Corrected range right": f"{R['coverage'][k]['adjusted'] * 100:.1f}%"})
-        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+        st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
 
         st.subheader("How long must a real recording be?")
         labels_in_order = [R["scenarios"][k]["label"] for k in R["scenarios"]]
@@ -348,7 +348,7 @@ with tab4:
                             legend=alt.Legend(orient="bottom", title=None)),
             tooltip=["network", "seconds", "power"])
         st.altair_chart((pc + alt.Chart(pd.DataFrame({"y": [C.POWER_TARGET]})).mark_rule(strokeDash=[6, 4], color=GREY).encode(y="y:Q")).properties(height=300),
-                        use_container_width=True)
+                        width="stretch")
         st.caption(f"Runs test, {C.POWER_REPS:,} simulated recordings per point. The dashed line is the {C.POWER_TARGET:.0%} target.")
 
 with st.expander("ℹ️ How does the pretend network work?"):
