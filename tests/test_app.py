@@ -25,8 +25,8 @@ def test_default_view_matches_full_study():
     at = _run()
     R = json.load(open(os.path.join(ROOT, "results", "results.json")))
     lost = R["scenarios"]["S2_WiFi"]["descriptive"]["losses"]
-    metrics = {m.label: m.value for m in at.metric}
-    assert metrics["Packets lost"] == f"{lost:,}"
+    tiles = [md.value for md in at.markdown if 'class="tiles"' in md.value]
+    assert tiles and f">{lost:,}<" in tiles[0]
 
 
 def test_coin_flip_mode_runs():

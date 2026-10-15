@@ -42,6 +42,10 @@ st.markdown("""
   .packets span { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
   .legend span { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin: 0 4px -1px 10px; }
   .explain { background: #F2F5F9; border-radius: 10px; padding: 10px 14px; font-size: 0.95rem; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 12px 0; }
+  .tile { flex: 1 1 150px; background: #F2F5F9; border-radius: 10px; padding: 10px 14px; }
+  .tile .lab { color: #4A5563; font-size: 0.85rem; }
+  .tile .val { font-size: 1.55rem; font-weight: 700; color: #1B2430; white-space: nowrap; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -148,13 +152,18 @@ pLN, pLL = E["markov"]["p_L_given_N"], E["markov"]["p_L_given_L"]
 mult = pLL / pLN if pLN > 0 else float("nan")
 bursty = E["markov"]["p"] < ALPHA or E["runs"]["p"] < ALPHA
 
-m = st.columns(5)
-m[0].metric("Packets lost", f"{E['k']:,}")
-m[1].metric("Loss rate seen", f"{E['rate'] * 100:.2f}%", help="What we measured in this run.")
-m[2].metric("True loss rate", f"{E['true_p'] * 100:.2f}%", help="The real long-run rate, known because we built the model.")
-m[3].metric("After a loss, next loss is", f"{mult:.0f}× likelier" if mult == mult else "n/a",
-            help="P(loss | previous lost) divided by P(loss | previous delivered). About 1× means independent.")
-m[4].metric("Longest burst", f"{int(E['bursts'].max())} in a row")
+# Stat tiles wrap onto a new row on narrow screens instead of being cut off.
+tiles = [
+    ("Packets lost", f"{E['k']:,}", ""),
+    ("Loss rate seen", f"{E['rate'] * 100:.2f}%", "What we measured in this run."),
+    ("True loss rate", f"{E['true_p'] * 100:.2f}%", "The real long-run rate, known because we built the model."),
+    ("After a loss, next loss is", f"{mult:.0f}× likelier" if mult == mult else "n/a",
+     "P(loss | previous lost) divided by P(loss | previous delivered). About 1× means independent."),
+    ("Longest burst", f"{int(E['bursts'].max())} in a row", ""),
+]
+st.markdown('<div class="tiles">' + "".join(
+    f'<div class="tile" title="{tip}"><div class="lab">{lab}</div><div class="val">{val}</div></div>'
+    for lab, val, tip in tiles) + "</div>", unsafe_allow_html=True)
 
 if bursty:
     st.markdown(f'<div class="verdict" style="background:#FCF2F1;border:1px solid #E8B4AE;">🔴 Verdict: losses come in <b>bursts</b>. '
