@@ -158,7 +158,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
     ["Focus:", "Distribution fitting, tests of independence and Bayesian estimation"],
     ["Tracks:", "Track 3 (core), Track 1 and Track 5 (supporting)"],
     ["Stage:", "Review 1 (Phase 1: simulation study)"],
-    ["Team:", "[Member A], [Member B], [Member C]"],
+    ["Team:", "[Add team names]"],
   ], { fontSize: 16, paraSpaceAfter: 10 });
   stat(s, 0.6, 5.15, 2.05, 1.1, String(N_NET), "network conditions", T.blue, NETCOL[0]);
   stat(s, 2.88, 5.15, 2.05, 1.1, num(CFG.packets * N_NET), "packets analysed", T.peach, NETCOL[1]);
@@ -176,7 +176,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 {
   const c = SR.compare;
   const zeros = (a) => a.filter((v) => v === 0).length;
-  const s = base("INTRODUCTION", "Member A",
+  const s = base("INTRODUCTION", null,
     `Basic loss models assume each packet is lost independently. Under that assumption the number of losses per second is Poisson and the time between losses is exponential. The two charts on the right have the same loss rate of ${pc(c.rate)}. The second one comes from our ${SEQN} scenario and shows grouped losses.`);
   text(s, 0.4, 1.1, 7.6, 0.8, "Basic loss models assume that each packet is lost independently. Under this assumption, loss counts are Poisson and gaps are exponential. Measured traffic often shows losses grouped close together.", { fontSize: 14 });
   text(s, 0.4, 2.0, 7.6, 0.3, "CONTEXT", { fontSize: 13, bold: true, color: NAVY });
@@ -204,7 +204,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // =====================================================================
 // 3. Objectives
 {
-  const s = base("OBJECTIVES AND HYPOTHESES", "Member B",
+  const s = base("OBJECTIVES AND HYPOTHESES", null,
     `Objectives one and two cover distribution modelling. Objectives three and four are hypothesis tests. Objective five is the Bayesian part. Objective six checks the tests and intervals by simulation. Each objective has a matching null and alternative hypothesis, tested at alpha equal to ${ALPHA}.`);
   panel(s, 0.4, 1.1, 6.6, 4.65, "Objectives");
   const obj = [
@@ -218,10 +218,10 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
   obj.forEach((o, i) => pill(s, 0.6 + (i % 2) * 3.2, 1.65 + Math.floor(i / 2) * 1.35, 3.0, 1.15, o[0], o[1], o[2]));
   panel(s, 7.3, 1.1, 5.63, 4.65, "Hypotheses");
   table(s, [["", "Null hypothesis H0", "Alternative H1"],
-    ["H1", "Losses per second ~ Poisson(λ)", "Over-dispersed, not Poisson"],
-    ["H2", "Gaps ~ Exponential(λ)", "Not exponential"],
-    ["H3", "Losses are i.i.d. Bernoulli(p)", "Markov chain: P(L|L) ≠ P(L|N)"],
-    ["H4", "All networks share one distribution", "At least one network differs"]],
+    ["H1", "Losses per second are Poisson (random)", "Too spread out: losses cluster"],
+    ["H2", "Gaps between losses are exponential", "Gaps are not exponential"],
+    ["H3", "Each packet is lost independently", "A loss changes the next packet's chance: P(L|L) ≠ P(L|N)"],
+    ["H4", "All networks behave the same", "At least one network differs"]],
     { x: 7.45, y: 1.65, w: 5.33, colW: [0.5, 2.45, 2.38], rowH: 0.7, fontSize: 12 });
   text(s, 7.45, 5.25, 5.33, 0.4, `All tests use a significance level of α = ${ALPHA}.`, { fontSize: 12, color: MUTED });
   text(s, 0.4, 5.95, 6, 0.3, "TRACK MAPPING", { fontSize: 13, bold: true, color: NAVY });
@@ -233,7 +233,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // =====================================================================
 // 4. Loss model and data
 {
-  const s = base("LOSS MODEL AND DATA", "Member A",
+  const s = base("LOSS MODEL AND DATA", null,
     `The channel has two hidden states, Good and Bad. Before each packet it may change state with probability p or r. Losses are rare in Good and frequent in Bad. Since we set these parameters ourselves, the true loss rate of each network is known. Each network is simulated for ${CFG.duration_s} seconds at ${CFG.packet_rate} packets per second.`);
   panel(s, 0.4, 1.1, 5.6, 5.8, "Gilbert-Elliott two-state model");
   s.addShape(S.OVAL, { x: 0.85, y: 1.95, w: 1.8, h: 1.2, fill: { color: T.blue }, line: { color: NETCOL[0], width: 2 } });
@@ -246,9 +246,9 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
   text(s, 2.6, 2.85, 1.2, 0.3, "r", { align: "center", fontSize: 14, bold: true });
   text(s, 0.6, 3.25, 2.3, 0.3, "stays with prob. 1 - p", { align: "center", fontSize: 11, color: MUTED });
   text(s, 3.5, 3.25, 2.3, 0.3, "stays with prob. 1 - r", { align: "center", fontSize: 11, color: MUTED });
-  pill(s, 0.6, 3.75, 5.2, 0.7, "Stationary probability of Bad:", "πB = p / (p + r)", T.sand);
-  pill(s, 0.6, 4.55, 5.2, 0.7, "Long-run loss rate:", "P(loss) = (1 - πB)·hG + πB·hB", T.sand);
-  pill(s, 0.6, 5.35, 5.2, 0.7, "Sojourn times are geometric:", "mean 1/p in Good and 1/r in Bad", T.sand);
+  pill(s, 0.6, 3.75, 5.2, 0.7, "πB = p / (p + r)", "Share of time the network spends in the Bad state.", T.sand);
+  pill(s, 0.6, 4.55, 5.2, 0.7, "P(loss) = (1 − πB) × hG + πB × hB", "Total loss = Good loss × Good time + Bad loss × Bad time.", T.sand);
+  pill(s, 0.6, 5.35, 5.2, 0.7, "Average stay = 1/p in Good, 1/r in Bad", "If you leave with chance r per packet, you stay about 1/r packets.", T.sand);
   text(s, 0.6, 6.15, 5.2, 0.65, "The simulation draws complete sojourn times from the geometric distribution instead of updating the state for every packet.", { fontSize: 12, color: MUTED });
 
   panel(s, 6.3, 1.1, 6.63, 3.3, "Scenario parameters");
@@ -269,7 +269,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // =====================================================================
 // 5. Methodology
 {
-  const s = base("METHODOLOGY", "Member B",
+  const s = base("METHODOLOGY", null,
     `The analysis runs as one pipeline. The simulated traces are summarised first. Distribution fitting, hypothesis testing and Bayesian analysis then run on the same data. The Monte Carlo studies use ${CFG.power_reps} replicates each. The output is a set of figures and two results files.`);
   panel(s, 0.4, 1.1, 8.1, 5.8, "Analysis pipeline");
   const box = (x, y, w, h, t1, t2, fill) => {
@@ -311,22 +311,22 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // =====================================================================
 // 6. Statistical methods
 {
-  const s = base("STATISTICAL METHODS", "Member B",
+  const s = base("STATISTICAL METHODS", null,
     `The table lists the method used for each objective. The Kolmogorov-Smirnov test uses a parametric bootstrap, because the rate is calculated from the sample being tested. The Markov test is a likelihood ratio test. By Wilks' theorem, G squared then follows a chi-square distribution with one degree of freedom.`);
   panel(s, 0.4, 1.1, 12.53, 5.0, "Methods by objective");
   table(s, [
-    ["Obj.", "Method", "Statistic", "Decision rule"],
-    ["O1", "Pearson chi-square goodness of fit", "χ² = Σ (O - E)² / E", "Tail bins pooled until E ≥ 5; df = bins - 1 - parameters"],
-    ["O1", "Index of dispersion test", "(n - 1)s² / x̄ ~ χ²(n - 1)", "Ratio above 1 indicates over-dispersion"],
-    ["O2", "Kolmogorov-Smirnov, parametric bootstrap", "D = sup |Fn(t) - F(t)|", `p-value from ${num(CFG.n_boot_ks)} refitted bootstrap samples`],
-    ["O2", "EM algorithm for the two-phase mixture", "Posterior phase weight for each gap", "Iterate until the log-likelihood converges"],
-    ["O3", "Wald-Wolfowitz runs test", "z = (R - E[R]) / sd(R)", "Few runs indicate clustering"],
-    ["O3", "Markov chain likelihood ratio test", "G² = 2(ln L1 - ln L0) ~ χ²(1)", `Reject H0 if p < ${ALPHA}`],
-    ["O4", "Kruskal-Wallis, Mann-Whitney, chi-square", "H, U and χ² statistics", `Pairwise p-values multiplied by ${(N_NET * (N_NET - 1)) / 2} (Bonferroni)`],
-    ["O5", "Beta-Binomial conjugate update", "Beta(1 + k, 1 + n - k)", "Equal-tailed 95% credible interval"],
-    ["O6", "Monte Carlo power and coverage", "Proportion of replicates", `${num(CFG.power_reps)} replicates; standard error ≤ ${mcSE.toFixed(3)}`],
-  ], { x: 0.55, y: 1.6, w: 12.23, colW: [0.7, 3.9, 3.4, 4.23], rowH: 0.43, fontSize: 12, leftCols: [1, 2, 3] });
-  pill(s, 0.4, 6.28, 4.0, 0.65, "Model selection:", "AIC = 2k - 2 ln L (lower is better)", T.sand);
+    ["Obj.", "Method", "Formula", "What it means"],
+    ["O1", "Chi-square goodness of fit", "χ² = Σ (O − E)² / E", "Adds up how far observed counts are from expected ones. Big = poor fit."],
+    ["O1", "Index of dispersion", "D = s² / x̄", "Spread ÷ average. About 1 if random; above 1 means clumping."],
+    ["O2", "Kolmogorov-Smirnov (bootstrap)", "D = max |Fn(t) − F(t)|", `Biggest gap between the data curve and the model curve (${num(CFG.n_boot_ks)} resamples).`],
+    ["O2", "EM algorithm", "guess → update → repeat", "Splits gaps into short (inside a burst) and long (between bursts)."],
+    ["O3", "Runs test", "z = (R − E[R]) / sd(R)", "Runs seen vs runs expected. Very negative z = losses stick together."],
+    ["O3", "Markov likelihood ratio", "G² = 2 (ln L1 − ln L0)", "How much better “a loss affects the next” fits than “no effect”."],
+    ["O4", "Kruskal-Wallis, Mann-Whitney", "p × number of pairs", `Do the networks differ? Bonferroni (× ${(N_NET * (N_NET - 1)) / 2}) avoids false alarms.`],
+    ["O5", "Bayesian update", "Beta(1 + k, 1 + n − k)", "Start knowing nothing, then add k losses and n − k deliveries."],
+    ["O6", "Monte Carlo", "SE = √(p(1 − p) / N)", `Repeat ${num(CFG.power_reps)} times and count how often it works (error ≤ ${mcSE.toFixed(3)}).`],
+  ], { x: 0.55, y: 1.6, w: 12.23, colW: [0.7, 3.2, 2.9, 5.43], rowH: 0.43, fontSize: 12, leftCols: [1, 2, 3] });
+  pill(s, 0.4, 6.28, 4.0, 0.65, "AIC = 2k − 2 ln L", "Fit score: lower wins; extra parameters cost points.", T.sand);
   pill(s, 4.6, 6.28, 4.0, 0.65, "Count window:", `${CFG.window_s} s = ${PPW} packets, ${num(N_WIN)} windows`, T.blue);
   pill(s, 8.8, 6.28, 4.13, 0.65, "Design-effect blocks:", `${CFG.block_s} s = ${CFG.block_s * CFG.packet_rate} packets`, T.green);
 }
@@ -336,7 +336,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 {
   const ratio = (k) => RS(k).descriptive.window_var / RS(k).descriptive.window_mean;
   const above = all((k) => ratio(k) > 1);
-  const s = base("DESCRIPTIVE STATISTICS", "Member A",
+  const s = base("DESCRIPTIVE STATISTICS", null,
     `These summaries are computed before any model is fitted. For a Poisson process the variance of the counts equals the mean. The variance-to-mean ratio is ${listJoin(KEYS.map((k) => ratio(k).toFixed(2)))} for ${listJoin(NAMES)}. The right-hand chart shows the share of losses that belong to a burst of two or more packets.`);
   panel(s, 0.4, 1.1, 7.5, 3.0, `${minutes(CFG.duration_s)} per network, ${num(CFG.packets)} packets each`);
   const rows = [["Network", "Loss rate", "Mean / s", "Variance", "Var ÷ mean", "Mean burst", "Max burst"]];
@@ -365,7 +365,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
   const P = SR.pmf, hk = CFG.heavy_k;
   const hs = (k) => SCN(k).heavy_seconds;
   const maxDispP = Math.max(...KEYS.map((k) => RS(k).tests.dispersion.p));
-  const s = base("DISTRIBUTION OF LOSS COUNTS", "Member A",
+  const s = base("DISTRIBUTION OF LOSS COUNTS", null,
     `The left chart uses a logarithmic scale. The Poisson curve drops quickly after a few losses, while the observed frequencies decline slowly. The Negative Binomial curve stays close to the data. For ${SEQN}, the Poisson model expects ${num(hs(SEQ).poisson, 0)} seconds with ${hk} or more losses. The trace contains ${hs(SEQ).observed}.`);
   panel(s, 0.4, 1.1, 6.4, 4.75, `${SEQN}: probability of k losses in one second`);
   const floor = (a) => a.map((v) => Math.max(v, 1e-6));
@@ -398,7 +398,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 {
   const Sv = SR.survival;
   const slow = KEYS.map((k) => `${(1 / RS(k).fits.hyper_rate_slow).toFixed(1)} s (${SHORT[k]})`);
-  const s = base("DISTRIBUTION OF INTER-LOSS GAPS", "Member A",
+  const s = base("DISTRIBUTION OF INTER-LOSS GAPS", null,
     `Gaps between losses are exponential only when losses form a Poisson process. On a log scale the exponential survival curve is a straight line, and the observed curve departs from it. The two-phase mixture fitted with the EM algorithm matches it closely. The fast phase corresponds to gaps inside a burst and the slow phase to gaps between bursts.`);
   panel(s, 0.4, 1.1, 6.4, 4.75, `${SEQN}: probability that a gap exceeds t`);
   s.addChart(pres.charts.LINE, [
@@ -423,7 +423,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // =====================================================================
 // 10. Independence
 {
-  const s = base("TESTS OF INDEPENDENCE", "Member B",
+  const s = base("TESTS OF INDEPENDENCE", null,
     `If losses were independent, the chance of a loss would not depend on the previous packet. For ${SEQN}, it is ${pc(RS(SEQ).tests.markov_lrt.p_L_given_N)} after a delivered packet and ${pc(RS(SEQ).tests.markov_lrt.p_L_given_L, 1)} after a lost one. The runs test agrees: there are fewer runs than independence predicts, which means losses are grouped.`);
   panel(s, 0.4, 1.1, 6.2, 3.65, "Loss probability given the previous packet");
   const lmax = Math.ceil(Math.max(...KEYS.map((k) => RS(k).tests.markov_lrt.p_L_given_L * 100)) / 10 + 1) * 10;
@@ -450,7 +450,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 {
   const seq = R.sequential.steps, first = seq[0], last = seq[seq.length - 1];
   const ord = R.ordering;
-  const s = base("BAYESIAN ESTIMATION", "Member C",
+  const s = base("BAYESIAN ESTIMATION", null,
     `We use a uniform Beta(1, 1) prior. With a binomial likelihood the posterior is also a Beta distribution. The chart shows the ${SEQN} posterior as more traffic is observed. After ${first.t} seconds the interval is wide; after ${last.t} seconds it is narrow. The posterior probability that the networks are ordered ${listJoin(NAMES)} by loss rate is ${ord.all_ordered.toFixed(3)}.`);
   panel(s, 0.4, 1.1, 6.4, 4.4, `${SEQN}: posterior after more traffic`);
   const lab = seq.map((q) => q.t + " s");
@@ -472,7 +472,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
     ["Chi-square homogeneity:", `${R.comparison.chi2_homog.toFixed(1)} on ${R.comparison.chi2_df} df`],
     ["Mann-Whitney pairs:", `largest Bonferroni p ${pval(maxPairP)}`],
   ], { fontSize: 14, paraSpaceAfter: 4 });
-  pill(s, 0.4, 5.7, 4.05, 1.2, "CONJUGATE UPDATE", "Prior Beta(1, 1). After k losses in n packets the posterior is Beta(1 + k, 1 + n - k).", T.sand);
+  pill(s, 0.4, 5.7, 4.05, 1.2, "Beta(1, 1) → Beta(1 + k, 1 + n − k)", "Start knowing nothing. Add the k losses and n − k deliveries you saw.", T.sand);
   pill(s, 4.62, 5.7, 4.05, 1.2, "ORDERING", `P(${NAMES.join(" < ")}) = ${ord.all_ordered.toFixed(3)} from ${num(CFG.ordering_draws)} posterior draws.`, T.green);
   pill(s, 8.85, 5.7, 4.08, 1.2, "MEAN BURST LENGTH", "Posterior medians of " + listJoin(KEYS.map((k) => RS(k).bayes.markov.burst_len_q[1].toFixed(2))) + " packets.", T.blue);
 }
@@ -485,7 +485,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
   const ratio = (k) => tail(k).observed / tail(k).predicted;
   const fmtRatio = (v) => (v >= 100 ? num(Math.round(v / 100) * 100) : v >= 10 ? num(v) : v.toFixed(1)) + "×";
   const deff = (k) => RS(k).bayes.adjusted_posterior.deff;
-  const s = base("PREDICTIVE CHECK AND DESIGN EFFECT", "Member C",
+  const s = base("PREDICTIVE CHECK AND DESIGN EFFECT", null,
     `The posterior predictive check asks how often the independent model expects ${hk} or more losses in one second. For ${SEQN} it predicts a probability of ${tail(SEQ).predicted.toExponential(1)}. The observed frequency is ${pc(tail(SEQ).observed, 1)}. The reason is positive correlation between nearby packets, which adds covariance terms to the variance of the total.`);
   panel(s, 0.4, 1.1, 6.4, 3.9, `P(${hk} or more losses in one second)`);
   s.addChart(pres.charts.BAR, [
@@ -500,13 +500,14 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
   s.addChart(pres.charts.BAR, [{ name: "Design effect", labels: NAMES, values: KEYS.map((k) => +deff(k).toFixed(2)) }],
     chartOpts({ x: 7.2, y: 1.5, w: 5.63, h: 2.55, barDir: "col", chartColors: KEYS.map((k) => COL[k]), showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.00", showLegend: false, valAxisMinVal: 0, valAxisMaxVal: Math.ceil(Math.max(...KEYS.map(deff)) / 2 + 1) * 2, barGapWidthPct: 60 }));
   panel(s, 7.1, 4.25, 5.83, 2.65, "Effect of positive correlation");
-  text(s, 7.3, 4.7, 5.45, 0.45, "Var(ΣXᵢ) = ΣVar(Xᵢ) + 2ΣCov(Xᵢ, Xⱼ)", { fontSize: 15, bold: true, align: "center", color: NAVY });
+  text(s, 7.3, 4.62, 5.45, 0.4, "Var(ΣXᵢ) = ΣVar(Xᵢ) + 2ΣCov(Xᵢ, Xⱼ)", { fontSize: 15, bold: true, align: "center", color: NAVY });
+  text(s, 7.3, 5.0, 5.45, 0.3, "Total spread = each packet's own spread + extra spread from packets moving together", { fontSize: 11, italic: true, align: "center", color: MUTED });
   const neff = Math.round(CFG.packets / deff(SEQ) / 1000) * 1000;
-  bullets(s, 7.3, 5.2, 5.45, 1.65, [
+  bullets(s, 7.3, 5.38, 5.45, 1.5, [
     "Inside a burst, neighbouring packets are positively correlated.",
-    "Design effect = block-count variance ÷ binomial variance.",
+    "Design effect = real spread ÷ spread if losses were random.",
     `Effective sample size n ÷ deff: for ${SEQN}, ${num(CFG.packets)} packets count as about ${num(neff)}.`,
-  ], { fontSize: 13, paraSpaceAfter: 6 });
+  ], { fontSize: 12, paraSpaceAfter: 4 });
 }
 
 // =====================================================================
@@ -514,7 +515,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 {
   const tr = RS(SEQ).true_long_run_loss_rate, pn = RS(SEQ).bayes.posterior, pa = RS(SEQ).bayes.adjusted_posterior;
   const inN = pn.ci_low <= tr && tr <= pn.ci_high, inA = pa.ci_low <= tr && tr <= pa.ci_high;
-  const s = base("COVERAGE OF 95% INTERVALS", "Member C",
+  const s = base("COVERAGE OF 95% INTERVALS", null,
     `We simulated ${num(CFG.coverage_reps)} captures of ${minutes(CFG.coverage_duration_s)} per network and recorded how often each interval contained the true loss rate. A 95% interval should do so about 95% of the time. Naive coverage ranged from ${pc(covNMin, 1)} to ${pc(covNMax, 1)}. After dividing by the design effect it ranged from ${pc(covAMin, 1)} to ${pc(covAMax, 1)}.`);
   panel(s, 0.4, 1.1, 7.2, 5.8, `Coverage in ${num(CFG.coverage_reps)} simulated ${minuteAdj(CFG.coverage_duration_s)} captures`);
   s.addChart([
@@ -549,7 +550,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // 14. Power
 {
   const runsBest = KEYS.filter((k) => firstAt(R.power[k].runs, PT) <= Math.min(...TESTS.map((t) => firstAt(R.power[k][t], PT) ?? Infinity))).length;
-  const s = base("POWER ANALYSIS", "Member B",
+  const s = base("POWER ANALYSIS", null,
     `Power is the probability of rejecting independence when the losses really are dependent. For each capture length we simulated ${num(CFG.power_reps)} captures and counted how often each test rejected. The table shows the shortest tested length with power of at least ${PT.toFixed(2)}. Based on this, Phase 2 should record at least ${minutes(recDur)} per network.`);
   panel(s, 0.4, 1.1, 7.2, 5.8, "Power of the runs test by capture length");
   const D = durs.map((d) => d + " s");
@@ -572,7 +573,7 @@ const arrowDown = (s, x, y, h) => s.addShape(S.LINE, { x, y, w: 0, h, line: { co
 // 15. Conclusions
 {
   const means = KEYS.map((k) => pc(RS(k).bayes.posterior.mean));
-  const s = base("CONCLUSIONS AND FUTURE WORK", "Member C",
+  const s = base("CONCLUSIONS AND FUTURE WORK", null,
     `The main result is that losses in all three scenarios are dependent and arrive in bursts. Models that assume independence fit poorly and give intervals that are too narrow. Phase 2 will repeat the analysis on measured traces. The timeline at the bottom is a proposal in weeks after this review.`);
   panel(s, 0.4, 1.1, 6.15, 3.55, "Conclusions");
   bullets(s, 0.55, 1.58, 5.85, 3.0, [
