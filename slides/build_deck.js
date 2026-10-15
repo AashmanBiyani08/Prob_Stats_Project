@@ -10,7 +10,7 @@ const CFG = DATA.config, R = DATA.results, SR = DATA.series;
 
 // Team shown on the title slide: [name, registration number]
 const TEAM = [
-  ["Kyra Panwar", "25BBS"],
+  ["Kyra Panwar", "25BBS0095"],
   ["Shashank Tiwari", "25BDS0053"],
   ["Aashman Biyani", "25BBS0100"],
 ];
