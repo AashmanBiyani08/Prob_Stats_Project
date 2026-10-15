@@ -25,6 +25,21 @@ python3 run_case_study.py
 
 Requires Python 3.9+. The seed is fixed at 2026, so results are reproducible. Outputs go to `results/`: figures `fig1`–`fig7`, `results.json` and `summary.md`.
 
+## Interactive app
+
+```bash
+streamlit run app.py
+```
+
+This opens the **Packet-Loss Lab** in your browser. Pick a network, choose how long to watch, and see:
+
+1. **Watch the packets:** every packet as a green (delivered) or red (lost) square, plus losses per second.
+2. **Is it random?** Four checks (spread, heavy seconds, runs, after-a-loss), each marked "looks random" or "not random".
+3. **How sure are we?** The normal and corrected 95% ranges against the true loss rate, a button that re-runs hundreds of pretend recordings to test them, and Bayesian learning over time.
+4. **Full study results:** the saved one-hour study and the power curves.
+
+Turn on **coin-flip mode** to make losses independent with the same average rate: every check turns green. With the default settings (Wi-Fi, 1 hour, seed 2026) the app reproduces the numbers in `results/summary.md`.
+
 ## Code layout
 
 | File | Contents | Owner |
@@ -35,6 +50,7 @@ Requires Python 3.9+. The seed is fixed at 2026, so results are reproducible. Ou
 | `src/hypothesis_tests.py` | χ² GOF, dispersion, bootstrap KS, runs test, Markov LRT, Kruskal-Wallis / Mann-Whitney, power study | Member B |
 | `src/bayesian.py` | Beta-Binomial posteriors, sequential updating, Markov posteriors, predictive check, design effect, coverage study | Member C |
 | `src/plots.py` | Figures | shared |
+| `app.py` | Interactive Streamlit app built on the same modules | shared |
 | `run_case_study.py` | Full pipeline and auto-generated `summary.md`; checks the config before running | shared |
 | `slides/export_deck_data.py` | Collects every number shown in the Review-1 deck from the pipeline output | shared |
 | `slides/build_deck.js` | Builds the Review-1 PowerPoint from `slides/deck_data.json` | shared |
@@ -47,7 +63,7 @@ pip install pytest
 python3 -m pytest tests -q
 ```
 
-The 33 tests cover three areas:
+There are 37 tests. `tests/test_app.py` (4 tests) starts the app and checks it reproduces the study. The 33 model tests cover three areas:
 
 - Edge cases: empty traces, no losses, all losses and very short runs.
 - Statistical checks: the simulator against theory, recovery of known Negative Binomial, two-phase and Markov parameters, the Markov G² against SciPy's G-test, Type I error, and interval coverage.
