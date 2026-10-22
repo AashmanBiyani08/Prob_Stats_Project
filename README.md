@@ -1,3 +1,5 @@
+> Continuing on a new device? Read [`HANDOFF.md`](HANDOFF.md) first.
+
 # Statistical Modelling of Packet-Loss Patterns in Computer Networks
 
 *Distribution Fitting, Burstiness Testing and Bayesian Estimation* — Probability & Statistics (BAMAT207) case study.
