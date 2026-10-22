@@ -2,7 +2,7 @@
 
 Read this file top to bottom before doing anything on a new device. It records what exists, where it lives, how to run it, the rules the work follows, and what is still pending.
 
-Last updated: 22 Oct 2026. Repo state at handoff: commit `fd6c12a` on `main`, 37 tests passing.
+Last updated: 22 Oct 2026. Repo state at handoff: `main` (latest code commit `fd6c12a`, this file added in `9661279`), 37 tests passing.
 
 ---
 
